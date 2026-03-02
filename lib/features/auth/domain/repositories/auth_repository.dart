@@ -18,4 +18,7 @@ abstract class AuthRepository {
     String password,
     String passwordConfirmation,
   );
+  
+  Future<Either<Failure, bool>> checkAuth();
 }
+

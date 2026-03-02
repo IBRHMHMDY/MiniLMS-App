@@ -39,16 +39,13 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            if (state is AuthSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('تم تسجيل الدخول بنجاح!')),
-              );
+            if (state is AuthSuccess || state is AuthAuthenticated) {
               context.go('/home');
             } else if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -81,10 +78,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       label: 'كلمة المرور',
                       hint: '******',
-                      isPassword: true,
+                      isPassword: true, // ستظهر أيقونة الإظهار/الإخفاء تلقائياً
                       validator: (value) => value!.isEmpty ? 'مطلوب' : null,
                     ),
-                    const SizedBox(height: 24),
+                    // إضافة رابط نسيت كلمة المرور هنا
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => context.push('/forgot-password'),
+                        child: Text(
+                          'نسيت كلمة المرور؟',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     CustomButton(
                       text: 'تسجيل الدخول',
                       onPressed: _submit,

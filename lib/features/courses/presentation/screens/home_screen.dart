@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/shimmer_box.dart';
 import '../bloc/category_bloc.dart';
 import '../bloc/category_event.dart';
 import '../bloc/category_state.dart';
@@ -21,7 +22,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // جلب البيانات عند بدء تشغيل الشاشة
     context.read<CategoryBloc>().add(GetCategoriesEvent());
     context.read<CourseBloc>().add(GetCoursesEvent());
   }
@@ -50,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- قسم الأقسام (Categories) ---
                 Text(
                   'تصفح بالأقسام',
                   style: Theme.of(context).textTheme.titleLarge,
@@ -61,7 +60,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: BlocBuilder<CategoryBloc, CategoryState>(
                     builder: (context, state) {
                       if (state is CategoryLoading) {
-                        return const Center(child: CircularProgressIndicator());
+                        // Shimmer للأقسام
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: 5,
+                          itemBuilder: (context, index) => const Padding(
+                            padding: EdgeInsets.only(right: 8.0),
+                            child: ShimmerBox(
+                              width: 80,
+                              height: 40,
+                              borderRadius: 20,
+                            ),
+                          ),
+                        );
                       } else if (state is CategoriesLoaded) {
                         return ListView.builder(
                           scrollDirection: Axis.horizontal,
@@ -70,9 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             final category = state.categories[index];
                             return CategoryChip(
                               name: category.name,
-                              onTap: () {
-                                // لاحقاً يمكن إضافة فلاتر الكورسات بناءً على القسم
-                              },
+                              onTap: () {},
                             );
                           },
                         );
@@ -90,7 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // --- قسم الكورسات (Courses) ---
                 Text(
                   'أحدث الكورسات',
                   style: Theme.of(context).textTheme.titleLarge,
@@ -99,7 +107,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 BlocBuilder<CourseBloc, CourseState>(
                   builder: (context, state) {
                     if (state is CourseLoading) {
-                      return const Center(child: CircularProgressIndicator());
+                      // Shimmer للكورسات
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: 3,
+                        itemBuilder: (context, index) => const Padding(
+                          padding: EdgeInsets.only(bottom: 16.0),
+                          child: ShimmerBox(
+                            width: double.infinity,
+                            height: 250,
+                            borderRadius: 16,
+                          ),
+                        ),
+                      );
                     } else if (state is CoursesLoaded) {
                       if (state.courses.isEmpty) {
                         return const Center(

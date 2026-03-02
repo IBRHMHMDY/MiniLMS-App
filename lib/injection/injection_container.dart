@@ -5,6 +5,7 @@ import 'package:mini_lms_app/core/network/dio_client.dart';
 import 'package:mini_lms_app/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:mini_lms_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:mini_lms_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mini_lms_app/features/auth/domain/usecases/check_auth_usecase.dart';
 import 'package:mini_lms_app/features/auth/domain/usecases/forgot_password_usecase.dart';
 import 'package:mini_lms_app/features/auth/domain/usecases/login_usecase.dart';
 import 'package:mini_lms_app/features/auth/domain/usecases/logout_usecase.dart';
@@ -44,7 +45,8 @@ Future<void> init() async {
       registerUseCase: sl(),
       logoutUseCase: sl(),
       forgotPasswordUseCase: sl(),
-      resetPasswordUseCase: sl(),
+      resetPasswordUseCase: sl(), 
+      checkAuthUseCase: sl(),
     ),
   );
 
@@ -54,6 +56,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
   sl.registerLazySingleton(() => ForgotPasswordUseCase(sl()));
   sl.registerLazySingleton(() => ResetPasswordUseCase(sl()));
+  sl.registerLazySingleton(() => CheckAuthUseCase(sl()));
 
   // Repository
   sl.registerLazySingleton<AuthRepository>(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/custom_button.dart';
+import '../../../../core/widgets/shimmer_box.dart';
 import '../bloc/course_bloc.dart';
 import '../bloc/course_event.dart';
 import '../bloc/course_state.dart';
@@ -40,10 +41,8 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                 backgroundColor: Colors.green,
               ),
             );
-            // توجيه المستخدم لشاشة الدروس بعد نجاح الاشتراك
             context.push('/course/${widget.courseId}/lessons');
           } else if (learningState is LearningError) {
-            // إذا كان مسجلاً بالفعل (حسب رسالة الباك إند) يمكننا توجيهه مباشرة
             if (learningState.message.toLowerCase().contains(
               'already enrolled',
             )) {
@@ -62,7 +61,40 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
           return BlocBuilder<CourseBloc, CourseState>(
             builder: (context, courseState) {
               if (courseState is CourseLoading) {
-                return const Center(child: CircularProgressIndicator());
+                // Shimmer لتفاصيل الكورس
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const ShimmerBox(
+                        width: double.infinity,
+                        height: 200,
+                        borderRadius: 0,
+                      ),
+                      const SizedBox(height: 16),
+                      const ShimmerBox(width: 100, height: 20),
+                      const SizedBox(height: 8),
+                      const ShimmerBox(width: double.infinity, height: 30),
+                      const SizedBox(height: 8),
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ShimmerBox(width: 150, height: 20),
+                          ShimmerBox(width: 80, height: 30),
+                        ],
+                      ),
+                      const Divider(height: 32),
+                      const ShimmerBox(width: 120, height: 24),
+                      const SizedBox(height: 8),
+                      const ShimmerBox(width: double.infinity, height: 16),
+                      const SizedBox(height: 4),
+                      const ShimmerBox(width: double.infinity, height: 16),
+                      const SizedBox(height: 4),
+                      const ShimmerBox(width: 200, height: 16),
+                    ],
+                  ),
+                );
               } else if (courseState is CourseError) {
                 return Center(
                   child: Text(

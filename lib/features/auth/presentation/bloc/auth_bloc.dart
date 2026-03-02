@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mini_lms_app/features/auth/domain/usecases/check_auth_usecase.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
@@ -13,6 +14,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LogoutUseCase logoutUseCase;
   final ForgotPasswordUseCase forgotPasswordUseCase;
   final ResetPasswordUseCase resetPasswordUseCase;
+  final CheckAuthUseCase checkAuthUseCase;
 
   AuthBloc({
     required this.loginUseCase,
@@ -20,12 +22,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.logoutUseCase,
     required this.forgotPasswordUseCase,
     required this.resetPasswordUseCase,
+    required this.checkAuthUseCase,
+    
   }) : super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
     on<LogoutRequested>(_onLogoutRequested);
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
+    on<CheckAuthRequested>(_onCheckAuthRequested);
   }
 
   Future<void> _onLoginRequested(
@@ -106,4 +111,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ),
     );
   }
+
+  Future<void> _onCheckAuthRequested(
+    CheckAuthRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    // محاكاة تأخير بسيط لتظهر الـ Splash Screen بشكل جمالي
+    await Future.delayed(const Duration(seconds: 2));
+    final result = await checkAuthUseCase();
+    result.fold((failure) => emit(AuthUnauthenticated()), (isAuthenticated) {
+      if (isAuthenticated) {
+        emit(AuthAuthenticated());
+      } else {
+        emit(AuthUnauthenticated());
+      }
+    });
+  }
+
 }

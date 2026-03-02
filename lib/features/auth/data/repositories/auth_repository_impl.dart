@@ -92,4 +92,14 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, bool>> checkAuth() async {
+    try {
+      final isAuthenticated = await remoteDataSource.checkAuth();
+      return Right(isAuthenticated);
+    } catch (e) {
+      return Left(CacheFailure('Failed to read token'));
+    }
+  }
 }

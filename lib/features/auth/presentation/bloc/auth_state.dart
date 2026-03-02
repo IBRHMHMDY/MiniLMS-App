@@ -46,3 +46,4 @@ class PasswordResetSuccess extends AuthState {
   @override
   List<Object?> get props => [message];
 }
+class AuthAuthenticated extends AuthState {} // عند وجود التوكن مسبقاً

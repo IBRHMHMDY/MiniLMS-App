@@ -1,27 +1,43 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mini_lms_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:mini_lms_app/features/auth/presentation/screens/login_screen.dart';
-import 'package:mini_lms_app/features/auth/presentation/screens/register_screen.dart';
-import 'package:mini_lms_app/features/courses/presentation/bloc/category_bloc.dart';
-import 'package:mini_lms_app/features/courses/presentation/bloc/course_bloc.dart';
-import 'package:mini_lms_app/features/courses/presentation/screens/course_details_screen.dart';
-import 'package:mini_lms_app/features/courses/presentation/screens/home_screen.dart';
-import 'package:mini_lms_app/features/learning/presentation/bloc/learning_bloc.dart';
-import 'package:mini_lms_app/features/learning/presentation/screens/course_lessons_screen.dart';
-import 'package:mini_lms_app/features/profile/presentation/bloc/profile_bloc.dart';
-import 'package:mini_lms_app/features/profile/presentation/bloc/profile_event.dart';
 import 'package:mini_lms_app/features/profile/presentation/screens/forgot_password_screen.dart';
-import 'package:mini_lms_app/features/profile/presentation/screens/profile_screen.dart';
 import 'package:mini_lms_app/features/profile/presentation/screens/reset_password_screen.dart';
-import 'package:mini_lms_app/injection/injection_container.dart';
 
+// Auth
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/register_screen.dart';
+
+
+// Profile
+import '../../features/profile/presentation/bloc/profile_bloc.dart';
+import '../../features/profile/presentation/bloc/profile_event.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
+
+// Courses
+import '../../features/courses/presentation/bloc/category_bloc.dart';
+import '../../features/courses/presentation/bloc/course_bloc.dart';
+import '../../features/courses/presentation/screens/home_screen.dart';
+import '../../features/courses/presentation/screens/course_details_screen.dart';
+
+// Learning
+import '../../features/learning/presentation/bloc/learning_bloc.dart';
+import '../../features/learning/presentation/screens/course_lessons_screen.dart';
+
+import '../../injection/injection_container.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/home', // التوجيه الافتراضي الآن هو الصفحة الرئيسية
+    initialLocation: '/', // التوجيه الافتراضي هو الـ Splash Screen
     routes: [
-      // --- مسارات المصادقة ---
+      GoRoute(
+        path: '/',
+        builder: (context, state) => BlocProvider(
+          create: (_) => sl<AuthBloc>(),
+          child: const SplashScreen(),
+        ),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => BlocProvider(
@@ -53,8 +69,6 @@ class AppRouter {
           );
         },
       ),
-
-      // --- مسارات التطبيق الداخلي ---
       GoRoute(
         path: '/home',
         builder: (context, state) => MultiBlocProvider(
@@ -72,9 +86,7 @@ class AppRouter {
           return MultiBlocProvider(
             providers: [
               BlocProvider(create: (_) => sl<CourseBloc>()),
-              BlocProvider(
-                create: (_) => sl<LearningBloc>(),
-              ), // أضفنا هذا لدعم الاشتراك
+              BlocProvider(create: (_) => sl<LearningBloc>()),
             ],
             child: CourseDetailsScreen(courseId: courseId),
           );

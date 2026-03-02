@@ -18,6 +18,7 @@ abstract class AuthRemoteDataSource {
     String password,
     String passwordConfirmation,
   );
+  Future<bool> checkAuth();
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -88,5 +89,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'password_confirmation': passwordConfirmation,
       },
     );
+  }
+  
+  @override
+  Future<bool> checkAuth() async {
+    final token = await secureStorage.read(key: 'auth_token');
+    return token != null && token.isNotEmpty;
   }
 }
