@@ -9,24 +9,23 @@ import 'package:mini_lms_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:mini_lms_app/features/auth/presentation/widgets/auth_header.dart';
 
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class ResetPasswordScreen extends StatefulWidget {
+  final String email;
+  const ResetPasswordScreen({super.key, required this.email});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _tokenController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
+    _tokenController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
     super.dispose();
@@ -35,9 +34,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
-        RegisterRequested(
-          name: _nameController.text,
-          email: _emailController.text,
+        ResetPasswordRequested(
+          email: widget.email,
+          token: _tokenController.text,
           password: _passwordController.text,
           passwordConfirmation: _passwordConfirmController.text,
         ),
@@ -48,15 +47,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('إنشاء حساب')),
+      appBar: AppBar(title: const Text('تعيين كلمة مرور جديدة')),
       body: SafeArea(
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            if (state is AuthSuccess) {
+            if (state is PasswordResetSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('تم إنشاء الحساب بنجاح!')),
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.green,
+                ),
               );
-              context.go('/profile');
+              context.go('/login'); // العودة لشاشة تسجيل الدخول
             } else if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -74,25 +76,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   children: [
                     const AuthHeader(
-                      title: 'حساب جديد',
-                      subtitle: 'انضم إلينا وابدأ رحلة التعلم',
+                      title: 'كلمة مرور جديدة',
+                      subtitle: 'أدخل الرمز المرسل وكلمة المرور الجديدة',
                     ),
                     CustomTextField(
-                      controller: _nameController,
-                      label: 'الاسم بالكامل',
-                      hint: 'أحمد محمد',
-                      validator: (value) => value!.isEmpty ? 'مطلوب' : null,
-                    ),
-                    CustomTextField(
-                      controller: _emailController,
-                      label: 'البريد الإلكتروني',
-                      hint: 'example@domain.com',
-                      keyboardType: TextInputType.emailAddress,
+                      controller: _tokenController,
+                      label: 'رمز الاستعادة (OTP)',
+                      hint: '123456',
+                      keyboardType: TextInputType.number,
                       validator: (value) => value!.isEmpty ? 'مطلوب' : null,
                     ),
                     CustomTextField(
                       controller: _passwordController,
-                      label: 'كلمة المرور',
+                      label: 'كلمة المرور الجديدة',
                       hint: '******',
                       isPassword: true,
                       validator: (value) => value!.length < 8
@@ -107,14 +103,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       validator: (value) {
                         if (value != _passwordController.text){
                           return 'كلمات المرور غير متطابقة';
-
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 24),
                     CustomButton(
-                      text: 'تسجيل',
+                      text: 'حفظ وتغيير',
                       onPressed: _submit,
                       isLoading: state is AuthLoading,
                     ),

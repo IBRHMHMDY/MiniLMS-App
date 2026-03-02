@@ -10,4 +10,12 @@ abstract class AuthRepository {
     String password,
     String passwordConfirmation,
   );
+  Future<Either<Failure, void>> logout();
+  Future<Either<Failure, void>> forgotPassword(String email);
+  Future<Either<Failure, void>> resetPassword(
+    String email,
+    String token,
+    String password,
+    String passwordConfirmation,
+  );
 }

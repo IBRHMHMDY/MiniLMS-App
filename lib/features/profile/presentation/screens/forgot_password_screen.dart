@@ -1,40 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mini_lms_app/core/widgets/custom_button.dart';
-import 'package:mini_lms_app/core/widgets/custom_text_field.dart';
 import 'package:mini_lms_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mini_lms_app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:mini_lms_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:mini_lms_app/features/auth/presentation/widgets/auth_header.dart';
+import '../../../../core/widgets/custom_button.dart';
+import '../../../../core/widgets/custom_text_field.dart';
 
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
-        LoginRequested(
-          email: _emailController.text,
-          password: _passwordController.text,
-        ),
+        ForgotPasswordRequested(email: _emailController.text),
       );
     }
   }
@@ -42,14 +37,19 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('نسيت كلمة المرور')),
       body: SafeArea(
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            if (state is AuthSuccess) {
+            if (state is PasswordResetTokenSent) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('تم تسجيل الدخول بنجاح!')),
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.green,
+                ),
               );
-              context.go('/profile');
+              // تمرير الإيميل لشاشة إعادة التعيين
+              context.push('/reset-password', extra: _emailController.text);
             } else if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -67,8 +67,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   children: [
                     const AuthHeader(
-                      title: 'مرحباً بك مجدداً',
-                      subtitle: 'قم بتسجيل الدخول لمتابعة تعلمك',
+                      title: 'استعادة الحساب',
+                      subtitle: 'أدخل بريدك الإلكتروني وسنرسل لك رمز الاستعادة',
                     ),
                     CustomTextField(
                       controller: _emailController,
@@ -77,23 +77,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) => value!.isEmpty ? 'مطلوب' : null,
                     ),
-                    CustomTextField(
-                      controller: _passwordController,
-                      label: 'كلمة المرور',
-                      hint: '******',
-                      isPassword: true,
-                      validator: (value) => value!.isEmpty ? 'مطلوب' : null,
-                    ),
                     const SizedBox(height: 24),
                     CustomButton(
-                      text: 'تسجيل الدخول',
+                      text: 'إرسال الرمز',
                       onPressed: _submit,
                       isLoading: state is AuthLoading,
-                    ),
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () => context.push('/register'),
-                      child: const Text('ليس لديك حساب؟ إنشاء حساب جديد'),
                     ),
                   ],
                 ),
