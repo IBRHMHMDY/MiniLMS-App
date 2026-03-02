@@ -1,20 +1,26 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/register_screen.dart';
+import '../../injection/injection_container.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/login',
     routes: [
       GoRoute(
-        path: '/',
-        builder: (context, state) => const Scaffold(
-          body: Center(
-            child: Text(
-              'Mini LMS Initialized successfully!\nWaiting for Auth Feature...',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
+        path: '/login',
+        builder: (context, state) => BlocProvider(
+          create: (_) => sl<AuthBloc>(),
+          child: const LoginScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => BlocProvider(
+          create: (_) => sl<AuthBloc>(),
+          child: const RegisterScreen(),
         ),
       ),
     ],
