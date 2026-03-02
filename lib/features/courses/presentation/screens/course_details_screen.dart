@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../bloc/course_bloc.dart';
 import '../bloc/course_event.dart';
 import '../bloc/course_state.dart';
+import '../../../learning/presentation/bloc/learning_bloc.dart';
+import '../../../learning/presentation/bloc/learning_event.dart';
+import '../../../learning/presentation/bloc/learning_state.dart';
 
 class CourseDetailsScreen extends StatefulWidget {
   final int courseId;
@@ -27,117 +31,131 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('تفاصيل الكورس')),
-      body: BlocBuilder<CourseBloc, CourseState>(
-        builder: (context, state) {
-          if (state is CourseLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is CourseError) {
-            return Center(
-              child: Text(
-                state.message,
-                style: const TextStyle(color: Colors.red),
+      body: BlocConsumer<LearningBloc, LearningState>(
+        listener: (context, learningState) {
+          if (learningState is EnrollmentSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(learningState.message),
+                backgroundColor: Colors.green,
               ),
             );
-          } else if (state is CourseDetailsLoaded) {
-            final course = state.course;
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // صورة الكورس
-                  Container(
-                    height: 200,
-                    width: double.infinity,
-                    color: Colors.grey.shade200,
-                    child: course.imageUrl != null
-                        ? Image.network(course.imageUrl!, fit: BoxFit.cover)
-                        : const Icon(
-                            Icons.school,
-                            size: 80,
-                            color: Colors.grey,
-                          ),
+            // توجيه المستخدم لشاشة الدروس بعد نجاح الاشتراك
+            context.push('/course/${widget.courseId}/lessons');
+          } else if (learningState is LearningError) {
+            // إذا كان مسجلاً بالفعل (حسب رسالة الباك إند) يمكننا توجيهه مباشرة
+            if (learningState.message.toLowerCase().contains(
+              'already enrolled',
+            )) {
+              context.push('/course/${widget.courseId}/lessons');
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(learningState.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+        builder: (context, learningState) {
+          return BlocBuilder<CourseBloc, CourseState>(
+            builder: (context, courseState) {
+              if (courseState is CourseLoading) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (courseState is CourseError) {
+                return Center(
+                  child: Text(
+                    courseState.message,
+                    style: const TextStyle(color: Colors.red),
                   ),
-                  const SizedBox(height: 16),
-
-                  // اسم القسم
-                  if (course.category != null)
-                    Text(
-                      course.category!.name,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-
-                  // عنوان الكورس
-                  Text(
-                    course.title,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.displayLarge?.copyWith(fontSize: 24),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // المدرب والسعر
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                );
+              } else if (courseState is CourseDetailsLoaded) {
+                final course = courseState.course;
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Container(
+                        height: 200,
+                        width: double.infinity,
+                        color: Colors.grey.shade200,
+                        child: course.imageUrl != null
+                            ? Image.network(course.imageUrl!, fit: BoxFit.cover)
+                            : const Icon(
+                                Icons.school,
+                                size: 80,
+                                color: Colors.grey,
+                              ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (course.category != null)
+                        Text(
+                          course.category!.name,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                      Text(
+                        course.title,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.displayLarge?.copyWith(fontSize: 24),
+                      ),
+                      const SizedBox(height: 8),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Icon(Icons.person, color: Colors.grey),
-                          const SizedBox(width: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.person, color: Colors.grey),
+                              const SizedBox(width: 8),
+                              Text(
+                                course.instructor?.name ?? 'غير معروف',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ],
+                          ),
                           Text(
-                            course.instructor?.name ?? 'غير معروف',
-                            style: Theme.of(context).textTheme.titleMedium,
+                            '\$${course.price.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              color: Colors.green,
+                            ),
                           ),
                         ],
                       ),
+                      const Divider(height: 32),
                       Text(
-                        '\$${course.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 24,
-                          color: Colors.green,
-                        ),
+                        'عن الكورس',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        course.description,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: 32),
+                      CustomButton(
+                        text: 'اشترك الآن / اذهب للدروس',
+                        isLoading: learningState is LearningLoading,
+                        onPressed: () {
+                          context.read<LearningBloc>().add(
+                            EnrollInCourseEvent(courseId: course.id),
+                          );
+                        },
                       ),
                     ],
                   ),
-                  const Divider(height: 32),
-
-                  // الوصف
-                  Text(
-                    'عن الكورس',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    course.description,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // زر الانضمام (يتم ربطه لاحقاً بميزة الانضمام Enrollment)
-                  CustomButton(
-                    text: 'اشترك الآن',
-                    onPressed: () {
-                      // سيتم بناء ميزة الانضمام في الخطوة القادمة
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'ميزة الاشتراك سيتم إضافتها في الخطوة القادمة',
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            );
-          }
-          return const SizedBox.shrink();
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          );
         },
       ),
     );

@@ -7,6 +7,8 @@ import 'package:mini_lms_app/features/courses/presentation/bloc/category_bloc.da
 import 'package:mini_lms_app/features/courses/presentation/bloc/course_bloc.dart';
 import 'package:mini_lms_app/features/courses/presentation/screens/course_details_screen.dart';
 import 'package:mini_lms_app/features/courses/presentation/screens/home_screen.dart';
+import 'package:mini_lms_app/features/learning/presentation/bloc/learning_bloc.dart';
+import 'package:mini_lms_app/features/learning/presentation/screens/course_lessons_screen.dart';
 import 'package:mini_lms_app/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:mini_lms_app/features/profile/presentation/bloc/profile_event.dart';
 import 'package:mini_lms_app/features/profile/presentation/screens/forgot_password_screen.dart';
@@ -67,9 +69,24 @@ class AppRouter {
         path: '/course/:id',
         builder: (context, state) {
           final courseId = int.parse(state.pathParameters['id']!);
-          return BlocProvider(
-            create: (_) => sl<CourseBloc>(),
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => sl<CourseBloc>()),
+              BlocProvider(
+                create: (_) => sl<LearningBloc>(),
+              ), // أضفنا هذا لدعم الاشتراك
+            ],
             child: CourseDetailsScreen(courseId: courseId),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/course/:id/lessons',
+        builder: (context, state) {
+          final courseId = int.parse(state.pathParameters['id']!);
+          return BlocProvider(
+            create: (_) => sl<LearningBloc>(),
+            child: CourseLessonsScreen(courseId: courseId),
           );
         },
       ),

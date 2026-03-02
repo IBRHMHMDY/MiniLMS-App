@@ -19,6 +19,12 @@ import 'package:mini_lms_app/features/courses/domain/usecases/get_course_details
 import 'package:mini_lms_app/features/courses/domain/usecases/get_courses_usecase.dart';
 import 'package:mini_lms_app/features/courses/presentation/bloc/category_bloc.dart';
 import 'package:mini_lms_app/features/courses/presentation/bloc/course_bloc.dart';
+import 'package:mini_lms_app/features/learning/data/datasources/learning_remote_data_source.dart';
+import 'package:mini_lms_app/features/learning/data/repositories/learning_repository_impl.dart';
+import 'package:mini_lms_app/features/learning/domain/repositories/learning_repository.dart';
+import 'package:mini_lms_app/features/learning/domain/usecases/enroll_in_course_usecase.dart';
+import 'package:mini_lms_app/features/learning/domain/usecases/get_course_lessons_usecase.dart';
+import 'package:mini_lms_app/features/learning/presentation/bloc/learning_bloc.dart';
 import 'package:mini_lms_app/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:mini_lms_app/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:mini_lms_app/features/profile/domain/repositories/profile_repository.dart';
@@ -92,6 +98,29 @@ Future<void> init() async {
   sl.registerLazySingleton<CourseRemoteDataSource>(
     () => CourseRemoteDataSourceImpl(dioClient: sl()),
   );
+
+// --- Features - Learning ---
+  // Bloc
+  sl.registerFactory(
+    () => LearningBloc(
+      enrollInCourseUseCase: sl(),
+      getCourseLessonsUseCase: sl(),
+    ),
+  );
+
+  // Use Cases
+  sl.registerLazySingleton(() => EnrollInCourseUseCase(sl()));
+  sl.registerLazySingleton(() => GetCourseLessonsUseCase(sl()));
+
+  // Repository & Data Source
+  sl.registerLazySingleton<LearningRepository>(
+    () => LearningRepositoryImpl(remoteDataSource: sl()),
+  );
+  sl.registerLazySingleton<LearningRemoteDataSource>(
+    () => LearningRemoteDataSourceImpl(dioClient: sl()),
+  );
+
+
   // --- Core ---
   sl.registerLazySingleton(() => DioClient(dio: sl(), secureStorage: sl()));
 
