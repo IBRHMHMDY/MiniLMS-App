@@ -49,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('تم تسجيل الدخول بنجاح!')),
               );
-              context.go('/profile');
+              context.go('/home');
             } else if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

@@ -56,7 +56,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('تم إنشاء الحساب بنجاح!')),
               );
-              context.go('/profile');
+              context.go('/home');
             } else if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

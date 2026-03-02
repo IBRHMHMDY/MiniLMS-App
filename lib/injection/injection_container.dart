@@ -11,6 +11,14 @@ import 'package:mini_lms_app/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:mini_lms_app/features/auth/domain/usecases/register_usecase.dart';
 import 'package:mini_lms_app/features/auth/domain/usecases/reset_password_usecase.dart';
 import 'package:mini_lms_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:mini_lms_app/features/courses/data/datasources/course_remote_data_source.dart';
+import 'package:mini_lms_app/features/courses/data/repositories/course_repository_impl.dart';
+import 'package:mini_lms_app/features/courses/domain/repositories/course_repository.dart';
+import 'package:mini_lms_app/features/courses/domain/usecases/get_categories_usecase.dart';
+import 'package:mini_lms_app/features/courses/domain/usecases/get_course_details_usecase.dart';
+import 'package:mini_lms_app/features/courses/domain/usecases/get_courses_usecase.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/category_bloc.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/course_bloc.dart';
 import 'package:mini_lms_app/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:mini_lms_app/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:mini_lms_app/features/profile/domain/repositories/profile_repository.dart';
@@ -65,7 +73,25 @@ Future<void> init() async {
   sl.registerLazySingleton<ProfileRemoteDataSource>(
     () => ProfileRemoteDataSourceImpl(dioClient: sl()),
   );
+// --- Features - Courses ---
+  // Blocs
+  sl.registerFactory(() => CategoryBloc(getCategoriesUseCase: sl()));
+  sl.registerFactory(
+    () => CourseBloc(getCoursesUseCase: sl(), getCourseDetailsUseCase: sl()),
+  );
 
+  // Use Cases
+  sl.registerLazySingleton(() => GetCategoriesUseCase(sl()));
+  sl.registerLazySingleton(() => GetCoursesUseCase(sl()));
+  sl.registerLazySingleton(() => GetCourseDetailsUseCase(sl()));
+
+  // Repository & Data Source
+  sl.registerLazySingleton<CourseRepository>(
+    () => CourseRepositoryImpl(remoteDataSource: sl()),
+  );
+  sl.registerLazySingleton<CourseRemoteDataSource>(
+    () => CourseRemoteDataSourceImpl(dioClient: sl()),
+  );
   // --- Core ---
   sl.registerLazySingleton(() => DioClient(dio: sl(), secureStorage: sl()));
 
