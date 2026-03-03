@@ -7,6 +7,7 @@ class LessonModel extends LessonEntity {
     super.content,
     super.videoUrl,
     required super.orderNumber,
+    required super.isCompleted
   });
 
   factory LessonModel.fromJson(Map<String, dynamic> json) {
@@ -16,6 +17,7 @@ class LessonModel extends LessonEntity {
       content: json['content'],
       videoUrl: json['video_url'],
       orderNumber: json['order_number'] ?? 0,
+      isCompleted: json['is_completed'] == true || json['is_completed'] == 1,
     );
   }
 }

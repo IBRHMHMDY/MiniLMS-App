@@ -2,6 +2,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mini_lms_app/features/profile/presentation/screens/forgot_password_screen.dart';
 import 'package:mini_lms_app/features/profile/presentation/screens/reset_password_screen.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/quiz_entities.dart';
+import 'package:mini_lms_app/features/quiz/presentation/bloc/quiz_bloc.dart';
+import 'package:mini_lms_app/features/quiz/presentation/screens/quiz_result_screen.dart';
+import 'package:mini_lms_app/features/quiz/presentation/screens/quiz_screen.dart';
 
 // Auth
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
@@ -100,6 +104,23 @@ class AppRouter {
             create: (_) => sl<LearningBloc>(),
             child: CourseLessonsScreen(courseId: courseId),
           );
+        },
+      ),
+      GoRoute(
+        path: '/course/:id/quiz',
+        builder: (context, state) {
+          final courseId = int.parse(state.pathParameters['id']!);
+          return BlocProvider(
+            create: (_) => sl<QuizBloc>(),
+            child: QuizScreen(courseId: courseId),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/course/:id/quiz/result',
+        builder: (context, state) {
+          final result = state.extra as QuizResultEntity;
+          return QuizResultScreen(result: result);
         },
       ),
       GoRoute(

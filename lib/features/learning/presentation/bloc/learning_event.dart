@@ -19,3 +19,12 @@ class GetCourseLessonsEvent extends LearningEvent {
   @override
   List<Object> get props => [courseId];
 }
+
+class ToggleLessonCompletionEvent extends LearningEvent {
+  final int lessonId;
+
+  const ToggleLessonCompletionEvent({required this.lessonId});
+
+  @override
+  List<Object> get props => [lessonId];
+}

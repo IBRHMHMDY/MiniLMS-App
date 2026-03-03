@@ -4,6 +4,8 @@ import '../models/lesson_model.dart';
 abstract class LearningRemoteDataSource {
   Future<void> enrollInCourse(int courseId);
   Future<List<LessonModel>> getCourseLessons(int courseId);
+
+  Future<void> toggleLessonCompletion(int lessonId) async {}
 }
 
 class LearningRemoteDataSourceImpl implements LearningRemoteDataSource {
@@ -22,5 +24,10 @@ class LearningRemoteDataSourceImpl implements LearningRemoteDataSource {
     final response = await dioClient.get('/courses/$courseId/lessons');
     final List data = response.data['data'];
     return data.map((json) => LessonModel.fromJson(json)).toList();
+  }
+
+  @override
+  Future<void> toggleLessonCompletion(int lessonId) async {
+    await dioClient.post('/lessons/$lessonId/toggle-completion');
   }
 }

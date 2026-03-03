@@ -25,6 +25,7 @@ import 'package:mini_lms_app/features/learning/data/repositories/learning_reposi
 import 'package:mini_lms_app/features/learning/domain/repositories/learning_repository.dart';
 import 'package:mini_lms_app/features/learning/domain/usecases/enroll_in_course_usecase.dart';
 import 'package:mini_lms_app/features/learning/domain/usecases/get_course_lessons_usecase.dart';
+import 'package:mini_lms_app/features/learning/domain/usecases/toggle_lesson_completion_usecase.dart';
 import 'package:mini_lms_app/features/learning/presentation/bloc/learning_bloc.dart';
 import 'package:mini_lms_app/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:mini_lms_app/features/profile/data/repositories/profile_repository_impl.dart';
@@ -32,6 +33,12 @@ import 'package:mini_lms_app/features/profile/domain/repositories/profile_reposi
 import 'package:mini_lms_app/features/profile/domain/usecases/get_profile_usecase.dart';
 import 'package:mini_lms_app/features/profile/domain/usecases/update_profile_usecase.dart';
 import 'package:mini_lms_app/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:mini_lms_app/features/quiz/data/datasources/quiz_remote_data_source.dart';
+import 'package:mini_lms_app/features/quiz/data/repositories/quiz_repository_impl.dart';
+import 'package:mini_lms_app/features/quiz/domain/repositories/quiz_repository.dart';
+import 'package:mini_lms_app/features/quiz/domain/usecases/get_course_quiz_usecase.dart';
+import 'package:mini_lms_app/features/quiz/domain/usecases/submit_quiz_usecase.dart';
+import 'package:mini_lms_app/features/quiz/presentation/bloc/quiz_bloc.dart';
 
 
 final sl = GetIt.instance;
@@ -103,19 +110,20 @@ Future<void> init() async {
   );
 
 // --- Features - Learning ---
-  // Bloc
+  // --- Features - Learning ---
   sl.registerFactory(
     () => LearningBloc(
       enrollInCourseUseCase: sl(),
       getCourseLessonsUseCase: sl(),
+      toggleLessonCompletionUseCase: sl(), // 👈 حقن الـ UseCase الجديد
     ),
   );
-
-  // Use Cases
   sl.registerLazySingleton(() => EnrollInCourseUseCase(sl()));
   sl.registerLazySingleton(() => GetCourseLessonsUseCase(sl()));
+  sl.registerLazySingleton(
+    () => ToggleLessonCompletionUseCase(sl()),
+  ); // 👈 تسجيله
 
-  // Repository & Data Source
   sl.registerLazySingleton<LearningRepository>(
     () => LearningRepositoryImpl(remoteDataSource: sl()),
   );
@@ -123,6 +131,18 @@ Future<void> init() async {
     () => LearningRemoteDataSourceImpl(dioClient: sl()),
   );
 
+// --- Features - Quiz ---
+  sl.registerFactory(
+    () => QuizBloc(getCourseQuizUseCase: sl(), submitQuizUseCase: sl()),
+  );
+  sl.registerLazySingleton(() => GetCourseQuizUseCase(sl()));
+  sl.registerLazySingleton(() => SubmitQuizUseCase(sl()));
+  sl.registerLazySingleton<QuizRepository>(
+    () => QuizRepositoryImpl(remoteDataSource: sl()),
+  );
+  sl.registerLazySingleton<QuizRemoteDataSource>(
+    () => QuizRemoteDataSourceImpl(dioClient: sl()),
+  );
 
   // --- Core ---
   sl.registerLazySingleton(() => DioClient(dio: sl(), secureStorage: sl()));
