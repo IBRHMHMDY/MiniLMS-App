@@ -5,4 +5,5 @@ import '../entities/lesson_entity.dart';
 abstract class LearningRepository {
   Future<Either<Failure, void>> enrollInCourse(int courseId);
   Future<Either<Failure, List<LessonEntity>>> getCourseLessons(int courseId);
+  Future<Either<Failure, void>> toggleLessonCompletion(int lessonId);
 }
