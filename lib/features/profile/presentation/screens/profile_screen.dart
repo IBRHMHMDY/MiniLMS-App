@@ -88,6 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: const Text('الملف الشخصي'),
           actions: [
             IconButton(
