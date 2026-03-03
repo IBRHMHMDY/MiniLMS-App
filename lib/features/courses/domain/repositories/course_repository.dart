@@ -7,4 +7,5 @@ abstract class CourseRepository {
   Future<Either<Failure, List<CategoryEntity>>> getCategories();
   Future<Either<Failure, List<CourseEntity>>> getCourses();
   Future<Either<Failure, CourseEntity>> getCourseDetails(int courseId);
+  Future<Either<Failure, List<CourseEntity>>> getMyCourses();
 }

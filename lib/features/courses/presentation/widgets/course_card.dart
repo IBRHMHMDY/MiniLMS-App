@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mini_lms_app/core/theme/app_colors.dart';
 import '../../domain/entities/course_entity.dart';
 
 class CourseCard extends StatelessWidget {
@@ -76,11 +77,15 @@ class CourseCard extends StatelessWidget {
                         ],
                       ),
                       Text(
-                        '\$${course.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
+                        course.isFree
+                            ? 'مجانى'
+                            : '\$${course.price!.toStringAsFixed(2)}',
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.green,
+                          fontSize: 24,
+                          color: course.isFree
+                              ? AppColors.secondary
+                              : AppColors.textPrimary,
                         ),
                       ),
                     ],

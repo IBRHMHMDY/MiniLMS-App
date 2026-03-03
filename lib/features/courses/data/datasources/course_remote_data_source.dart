@@ -6,6 +6,7 @@ abstract class CourseRemoteDataSource {
   Future<List<CategoryModel>> getCategories();
   Future<List<CourseModel>> getCourses();
   Future<CourseModel> getCourseDetails(int courseId);
+  Future<List<CourseModel>> getMyCourses();
 }
 
 class CourseRemoteDataSourceImpl implements CourseRemoteDataSource {
@@ -31,5 +32,13 @@ class CourseRemoteDataSourceImpl implements CourseRemoteDataSource {
   Future<CourseModel> getCourseDetails(int courseId) async {
     final response = await dioClient.get('/courses/$courseId');
     return CourseModel.fromJson(response.data['data']);
+  }
+
+  @override
+  Future<List<CourseModel>> getMyCourses() async {
+    final response = await dioClient.get('/my-courses');
+    return (response.data['data'] as List)
+        .map((course) => CourseModel.fromJson(course))
+        .toList();
   }
 }

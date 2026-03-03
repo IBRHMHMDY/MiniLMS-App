@@ -18,6 +18,7 @@ import 'package:mini_lms_app/features/courses/domain/repositories/course_reposit
 import 'package:mini_lms_app/features/courses/domain/usecases/get_categories_usecase.dart';
 import 'package:mini_lms_app/features/courses/domain/usecases/get_course_details_usecase.dart';
 import 'package:mini_lms_app/features/courses/domain/usecases/get_courses_usecase.dart';
+import 'package:mini_lms_app/features/courses/domain/usecases/get_my_courses_usecase.dart';
 import 'package:mini_lms_app/features/courses/presentation/bloc/category_bloc.dart';
 import 'package:mini_lms_app/features/courses/presentation/bloc/course_bloc.dart';
 import 'package:mini_lms_app/features/learning/data/datasources/learning_remote_data_source.dart';
@@ -40,7 +41,6 @@ import 'package:mini_lms_app/features/quiz/domain/usecases/get_course_quiz_useca
 import 'package:mini_lms_app/features/quiz/domain/usecases/submit_quiz_usecase.dart';
 import 'package:mini_lms_app/features/quiz/presentation/bloc/quiz_bloc.dart';
 
-
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -52,7 +52,7 @@ Future<void> init() async {
       registerUseCase: sl(),
       logoutUseCase: sl(),
       forgotPasswordUseCase: sl(),
-      resetPasswordUseCase: sl(), 
+      resetPasswordUseCase: sl(),
       checkAuthUseCase: sl(),
     ),
   );
@@ -89,17 +89,22 @@ Future<void> init() async {
   sl.registerLazySingleton<ProfileRemoteDataSource>(
     () => ProfileRemoteDataSourceImpl(dioClient: sl()),
   );
-// --- Features - Courses ---
+  // --- Features - Courses ---
   // Blocs
   sl.registerFactory(() => CategoryBloc(getCategoriesUseCase: sl()));
   sl.registerFactory(
-    () => CourseBloc(getCoursesUseCase: sl(), getCourseDetailsUseCase: sl()),
+    () => CourseBloc(
+      getCoursesUseCase: sl(),
+      getCourseDetailsUseCase: sl(),
+      getMyCoursesUseCase: sl(),
+    ),
   );
 
   // Use Cases
   sl.registerLazySingleton(() => GetCategoriesUseCase(sl()));
   sl.registerLazySingleton(() => GetCoursesUseCase(sl()));
   sl.registerLazySingleton(() => GetCourseDetailsUseCase(sl()));
+  sl.registerLazySingleton(() => GetMyCoursesUseCase(sl()));
 
   // Repository & Data Source
   sl.registerLazySingleton<CourseRepository>(
@@ -109,20 +114,18 @@ Future<void> init() async {
     () => CourseRemoteDataSourceImpl(dioClient: sl()),
   );
 
-// --- Features - Learning ---
+  // --- Features - Learning ---
   // --- Features - Learning ---
   sl.registerFactory(
     () => LearningBloc(
       enrollInCourseUseCase: sl(),
       getCourseLessonsUseCase: sl(),
-      toggleLessonCompletionUseCase: sl(), // 👈 حقن الـ UseCase الجديد
+      toggleLessonCompletionUseCase: sl(),
     ),
   );
   sl.registerLazySingleton(() => EnrollInCourseUseCase(sl()));
   sl.registerLazySingleton(() => GetCourseLessonsUseCase(sl()));
-  sl.registerLazySingleton(
-    () => ToggleLessonCompletionUseCase(sl()),
-  ); // 👈 تسجيله
+  sl.registerLazySingleton(() => ToggleLessonCompletionUseCase(sl()));
 
   sl.registerLazySingleton<LearningRepository>(
     () => LearningRepositoryImpl(remoteDataSource: sl()),
@@ -131,7 +134,7 @@ Future<void> init() async {
     () => LearningRemoteDataSourceImpl(dioClient: sl()),
   );
 
-// --- Features - Quiz ---
+  // --- Features - Quiz ---
   sl.registerFactory(
     () => QuizBloc(getCourseQuizUseCase: sl(), submitQuizUseCase: sl()),
   );

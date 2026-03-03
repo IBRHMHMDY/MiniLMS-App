@@ -9,16 +9,16 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
   final EnrollInCourseUseCase enrollInCourseUseCase;
   final GetCourseLessonsUseCase getCourseLessonsUseCase;
   final ToggleLessonCompletionUseCase
-  toggleLessonCompletionUseCase; // 👈 الـ UseCase الجديد
+  toggleLessonCompletionUseCase;
 
   LearningBloc({
     required this.enrollInCourseUseCase,
     required this.getCourseLessonsUseCase,
-    required this.toggleLessonCompletionUseCase, // 👈 استقباله هنا
+    required this.toggleLessonCompletionUseCase,
   }) : super(LearningInitial()) {
     on<EnrollInCourseEvent>(_onEnrollInCourse);
     on<GetCourseLessonsEvent>(_onGetCourseLessons);
-    on<ToggleLessonCompletionEvent>(_onToggleLesson); // 👈 ربط الحدث بالدالة
+    on<ToggleLessonCompletionEvent>(_onToggleLesson);
   }
 
   Future<void> _onEnrollInCourse(
@@ -73,9 +73,7 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
           emit(LearningError(message: failure.message));
           emit(currentState);
         },
-        (_) {
-          // نجح التحديث في السيرفر، لا حاجة لعمل شيء لأننا قمنا بتحديث الـ UI مسبقاً
-        },
+        (_) {}, // نجح التحديث في السيرفر، لا حاجة لعمل شيء لأننا قمنا بتحديث الـ UI مسبقاً
       );
     }
   }

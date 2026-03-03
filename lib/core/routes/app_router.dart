@@ -54,7 +54,10 @@ class AppRouter {
           ),
           GoRoute(
             path: '/my-courses',
-            builder: (context, state) => const MyCoursesScreen(),
+            builder: (context, state) => BlocProvider(
+              create: (_) => sl<CourseBloc>(),
+              child: const MyCoursesScreen(),
+            ),
           ),
           GoRoute(
             path: '/profile',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mini_lms_app/core/theme/app_colors.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/shimmer_box.dart';
 import '../bloc/course_bloc.dart';
@@ -20,6 +21,7 @@ class CourseDetailsScreen extends StatefulWidget {
 }
 
 class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
+  
   @override
   void initState() {
     super.initState();
@@ -41,7 +43,8 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                 backgroundColor: Colors.green,
               ),
             );
-            context.push('/course/${widget.courseId}/lessons');
+            // context.push('/course/${widget.courseId}/lessons');
+            context.go('/my-courses');
           } else if (learningState is LearningError) {
             if (learningState.message.toLowerCase().contains(
               'already enrolled',
@@ -104,6 +107,10 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                 );
               } else if (courseState is CourseDetailsLoaded) {
                 final course = courseState.course;
+                bool isFree = course.isFree;
+                String buttonText = course.isFree
+                    ? 'اشترك الآن مجاناً'
+                    : 'شراء الكورس مقابل \$${course.price}';
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -152,11 +159,11 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                             ],
                           ),
                           Text(
-                            '\$${course.price.toStringAsFixed(2)}',
-                            style: const TextStyle(
+                            course.isFree ? 'مجانى' : '\$${course.price!.toStringAsFixed(2)}',
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 24,
-                              color: Colors.green,
+                              color: course.isFree ? AppColors.secondary : AppColors.textPrimary,
                             ),
                           ),
                         ],
@@ -173,13 +180,40 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                       ),
                       const SizedBox(height: 32),
                       CustomButton(
-                        text: 'اشترك الآن / اذهب للدروس',
-                        isLoading: learningState is LearningLoading,
                         onPressed: () {
-                          context.read<LearningBloc>().add(
-                            EnrollInCourseEvent(courseId: course.id),
-                          );
+                          if (!isFree) {
+                            // 👈 المنطق التجاري: إظهار رسالة للكورسات المدفوعة
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Row(
+                                  children: [
+                                    Icon(Icons.payment, color: Colors.blue),
+                                    SizedBox(width: 8),
+                                    Text('بوابة الدفع'),
+                                  ],
+                                ),
+                                content: const Text(
+                                  'سيتم ربط بوابة الدفع قريباً. شكراً لاهتمامك بهذا الكورس المتميز!',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('حسناً'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          } else {
+                            // 👈 الكورس مجاني: تسجيل فوري
+                            context.read<LearningBloc>().add(
+                              EnrollInCourseEvent(courseId: course.id),
+                            );
+                          }
                         },
+                        text: buttonText,
+                        backgroundColor: isFree ? AppColors.success : AppColors.primary,
+                        isLoading: learningState is LearningLoading,
                       ),
                     ],
                   ),

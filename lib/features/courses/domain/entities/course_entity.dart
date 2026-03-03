@@ -6,11 +6,11 @@ class CourseEntity extends Equatable {
   final int id;
   final String title;
   final String description;
-  final double price;
+  final double? price;
   final String? imageUrl;
+  final bool isFree;
   final InstructorEntity? instructor;
   final CategoryEntity? category;
-
   const CourseEntity({
     required this.id,
     required this.title,
@@ -18,7 +18,7 @@ class CourseEntity extends Equatable {
     required this.price,
     this.imageUrl,
     this.instructor,
-    this.category,
+    this.category, this.isFree = true,
   });
 
   @override
@@ -30,5 +30,6 @@ class CourseEntity extends Equatable {
     imageUrl,
     instructor,
     category,
+    isFree
   ];
 }

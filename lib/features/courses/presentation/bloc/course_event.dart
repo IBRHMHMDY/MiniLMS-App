@@ -14,3 +14,4 @@ class GetCourseDetailsEvent extends CourseEvent {
   @override
   List<Object> get props => [courseId];
 }
+class GetMyCoursesEvent extends CourseEvent {}

@@ -11,6 +11,7 @@ class CourseModel extends CourseEntity {
     super.imageUrl,
     super.instructor,
     super.category,
+    super.isFree
   });
 
   factory CourseModel.fromJson(Map<String, dynamic> json) {
@@ -18,7 +19,9 @@ class CourseModel extends CourseEntity {
       id: json['id'],
       title: json['title'],
       description: json['description'],
-      price: (json['price'] as num).toDouble(),
+      price: json['price'] != null
+          ? double.tryParse(json['price'].toString())
+          : null,
       imageUrl: json['image_url'],
       instructor: json['instructor'] != null
           ? InstructorModel.fromJson(json['instructor'])
@@ -26,6 +29,9 @@ class CourseModel extends CourseEntity {
       category: json['category'] != null
           ? CategoryModel.fromJson(json['category'])
           : null,
+      isFree: json['is_free'] != null
+          ? (json['is_free'] == true || json['is_free'] == 1)
+          : true,
     );
   }
 }

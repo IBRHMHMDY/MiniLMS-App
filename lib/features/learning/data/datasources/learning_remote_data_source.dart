@@ -22,8 +22,28 @@ class LearningRemoteDataSourceImpl implements LearningRemoteDataSource {
   @override
   Future<List<LessonModel>> getCourseLessons(int courseId) async {
     final response = await dioClient.get('/courses/$courseId/lessons');
-    final List data = response.data['data'];
-    return data.map((json) => LessonModel.fromJson(json)).toList();
+
+    // سطر الطباعة لكشف شكل البيانات الحقيقي
+    print('💡 استجابة الدروس: ${response.data}');
+
+    // 👈 اللمسة المعمارية: التعامل مع التغليف المزدوج من لارافيل
+    var responseData = response.data['data'];
+
+    // إذا كان لارافيل قد أرسلها كـ Map بداخلها data، نستخرجها
+    if (responseData is Map && responseData.containsKey('data')) {
+      responseData = responseData['data'];
+    }
+
+    // الآن نحن متأكدون بنسبة 100% أنها List
+    final List dataList = responseData as List;
+
+    return dataList
+        .map((json) {
+          if (json is List) return null;
+          return LessonModel.fromJson(json as Map<String, dynamic>);
+        })
+        .whereType<LessonModel>()
+        .toList(); // استبعاد أي قيم null
   }
 
   @override

@@ -46,4 +46,16 @@ class CourseRepositoryImpl implements CourseRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, List<CourseEntity>>> getMyCourses() async {
+    try {
+      final courses = await remoteDataSource.getMyCourses();
+      return Right(courses);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

@@ -6,7 +6,6 @@ import 'core/theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // تهيئة حقن الاعتماديات (Dependency Injection)
   await di.init();
 
   runApp(const MiniLmsApp());
@@ -20,10 +19,7 @@ class MiniLmsApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Mini LMS',
       debugShowCheckedModeBanner: false,
-
-      // تطبيق الهوية البصرية ونظام التصميم
       theme: AppTheme.lightTheme,
-
       routerConfig: AppRouter.router,
     );
   }
