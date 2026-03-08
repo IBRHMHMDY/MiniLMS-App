@@ -1,4 +1,5 @@
 import 'package:mini_lms_app/features/quiz/domain/entities/quiz_result_entity.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/review_detail_entity.dart';
 
 class QuizResultModel extends QuizResultEntity {
   const QuizResultModel({
@@ -7,22 +8,33 @@ class QuizResultModel extends QuizResultEntity {
     required super.message,
     required super.correctAnswers,
     required super.totalQuestions,
+    required super.details
   });
 
-  factory QuizResultModel.fromJson(Map<String, dynamic> json) {
+factory QuizResultModel.fromJson(Map<String, dynamic> json) {
+    // Parsing مصفوفة التفاصيل بأمان
+    var detailsList = json['details'] as List?;
+    List<ReviewDetailEntity> parsedDetails = [];
+    if (detailsList != null) {
+      parsedDetails = detailsList
+          .map<ReviewDetailEntity>(
+            (i) => ReviewDetailEntity(
+              questionId: i['question_id'] ?? 0,
+              selectedAnswerId: i['selected_answer_id'],
+              correctAnswerId: i['correct_answer_id'],
+              isCorrect: i['is_correct'] ?? false,
+            ),
+          )
+          .toList();
+    }
+
     return QuizResultModel(
-      score: json['score'] ?? 0,
-      passed:
-          json['passed'] == true ||
-          json['passed'] == 1 ||
-          json['passed'] == '1',
-      message: json['message']?.toString() ?? '',
-      correctAnswers: json['correct_answers'] is int
-          ? json['correct_answers']
-          : int.tryParse(json['correct_answers'].toString()) ?? 0,
-      totalQuestions: json['total_questions'] is int
-          ? json['total_questions']
-          : int.tryParse(json['total_questions'].toString()) ?? 0,
+      score: (json['score'] ?? 0).toDouble(),
+      passed: json['passed'] ?? false,
+      correctAnswers: json['correct_answers'] ?? 0,
+      totalQuestions: json['total_questions'] ?? 0,
+      message: json['message'] ?? '',
+      details: parsedDetails, // 👈 تمرير التفاصيل
     );
   }
 }

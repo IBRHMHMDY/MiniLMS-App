@@ -10,9 +10,8 @@ import 'package:mini_lms_app/features/quiz/presentation/bloc/quiz_state.dart';
 
 
 class QuizScreen extends StatefulWidget {
-  final QuizEntity? quiz; // تم جعله Nullable لدعم اختبار الكورس النهائي
+  final QuizEntity? quiz;
   final int courseId;
-
   const QuizScreen({super.key, this.quiz, required this.courseId});
 
   @override
@@ -21,11 +20,12 @@ class QuizScreen extends StatefulWidget {
 
 class _QuizScreenState extends State<QuizScreen> {
   int _currentQuestionIndex = 0;
+  QuizEntity? _fetchedQuiz;
 
   @override
   void initState() {
     super.initState();
-    // 👈 المعمارية الذكية: إذا تم تمرير اختبار (درس) نستخدمه، وإلا نطلبه من الـ API (نهائي)
+    // التهيئة الذكية: من السيرفر إذا كان الاختبار نهائياً، ومن الدرس إذا كان ممرراً
     if (widget.quiz != null) {
       context.read<QuizBloc>().add(
         InitializeLessonQuizEvent(quiz: widget.quiz!),
@@ -70,7 +70,7 @@ class _QuizScreenState extends State<QuizScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogContext); // إغلاق الديالوج
-              // 👈 إرسال الحدث الفعلي للـ Bloc
+              // 👈 إرسال الحدث الحقيقي للـ API عبر الـ Bloc
               context.read<QuizBloc>().add(
                 SubmitQuizEvent(courseId: widget.courseId),
               );
@@ -85,6 +85,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // استخدمنا BlocConsumer لنتمكن من الانتقال لشاشة النتيجة عند النجاح
     return BlocConsumer<QuizBloc, QuizState>(
       listener: (context, state) {
         if (state is QuizError) {
@@ -98,14 +99,18 @@ class _QuizScreenState extends State<QuizScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          // 👈 الانتقال لشاشة النتيجة مع تمرير الكائن
+
+          // 👈 التعديل الذكي: نستخدم الاختبار الممرر أو الذي حفظناه في الشاشة
+          final currentQuiz = widget.quiz ?? _fetchedQuiz!;
+
           context.pushReplacement(
             '/course/${widget.courseId}/quiz/result',
-            extra: state.result,
+            extra: {'result': state.result, 'quiz': currentQuiz},
           );
         }
       },
       builder: (context, state) {
+        // عرض دائرة التحميل أثناء جلب الأسئلة أو أثناء إرسال الإجابات
         if (state is QuizLoading || state is QuizSubmitting) {
           return const Scaffold(
             body: Center(
@@ -125,12 +130,14 @@ class _QuizScreenState extends State<QuizScreen> {
         }
 
         if (state is QuizLoaded) {
-          final QuizEntity quiz = state.quiz;
+          _fetchedQuiz = state.quiz; // 👈 حفظ الاختبار هنا بمجرد تحميله!
+
+          final QuizEntity activeQuiz = state.quiz;
           final Map<int, int> selectedAnswers = state.selectedAnswers;
 
-          if (quiz.questions.isEmpty) {
+          if (activeQuiz.questions.isEmpty) {
             return Scaffold(
-              appBar: AppBar(title: Text(quiz.title)),
+              appBar: AppBar(title: Text(activeQuiz.title)),
               body: const Center(
                 child: Text(
                   'عذراً، لا توجد أسئلة في هذا الاختبار حالياً.',
@@ -141,9 +148,9 @@ class _QuizScreenState extends State<QuizScreen> {
           }
 
           final QuestionEntity currentQuestion =
-              quiz.questions[_currentQuestionIndex];
+              activeQuiz.questions[_currentQuestionIndex];
           final bool isLastQuestion =
-              _currentQuestionIndex == quiz.questions.length - 1;
+              _currentQuestionIndex == activeQuiz.questions.length - 1;
           final bool isFirstQuestion = _currentQuestionIndex == 0;
           final bool hasAnsweredCurrent = selectedAnswers.containsKey(
             currentQuestion.id,
@@ -151,7 +158,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
           return Scaffold(
             appBar: AppBar(
-              title: Text(quiz.title),
+              title: Text(activeQuiz.title),
               centerTitle: true,
               elevation: 0,
             ),
@@ -160,9 +167,10 @@ class _QuizScreenState extends State<QuizScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // شريط التقدم
                   LinearProgressIndicator(
-                    value: (_currentQuestionIndex + 1) / quiz.questions.length,
+                    value:
+                        (_currentQuestionIndex + 1) /
+                        activeQuiz.questions.length,
                     backgroundColor: Colors.grey.shade300,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       Theme.of(context).primaryColor,
@@ -170,10 +178,8 @@ class _QuizScreenState extends State<QuizScreen> {
                     minHeight: 8.0,
                   ),
                   const SizedBox(height: 16.0),
-
-                  // عداد الأسئلة
                   Text(
-                    'سؤال ${_currentQuestionIndex + 1} من ${quiz.questions.length}',
+                    'سؤال ${_currentQuestionIndex + 1} من ${activeQuiz.questions.length}',
                     style: const TextStyle(
                       fontSize: 16.0,
                       fontWeight: FontWeight.bold,
@@ -181,8 +187,6 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                   ),
                   const SizedBox(height: 16.0),
-
-                  // نص السؤال
                   Text(
                     currentQuestion.questionText,
                     style: const TextStyle(
@@ -192,8 +196,6 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                   ),
                   const SizedBox(height: 32.0),
-
-                  // خيارات الإجابة
                   Expanded(
                     child: ListView.builder(
                       itemCount: currentQuestion.answers.length,
@@ -206,14 +208,13 @@ class _QuizScreenState extends State<QuizScreen> {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
                           child: InkWell(
-                            onTap: () {
-                              context.read<QuizBloc>().add(
-                                SelectAnswerEvent(
-                                  questionId: currentQuestion.id,
-                                  answerId: answer.id,
-                                ),
-                              );
-                            },
+                            // 👈 تحديث الإجابة عبر الـ Bloc
+                            onTap: () => context.read<QuizBloc>().add(
+                              SelectAnswerEvent(
+                                questionId: currentQuestion.id,
+                                answerId: answer.id,
+                              ),
+                            ),
                             borderRadius: BorderRadius.circular(12.0),
                             child: Container(
                               decoration: BoxDecoration(
@@ -267,8 +268,6 @@ class _QuizScreenState extends State<QuizScreen> {
                       },
                     ),
                   ),
-
-                  // أزرار التنقل (السابق / التالي / إنهاء)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -292,16 +291,15 @@ class _QuizScreenState extends State<QuizScreen> {
                         )
                       else
                         const Spacer(),
-
                       const SizedBox(width: 16.0),
-
                       Expanded(
                         child: ElevatedButton(
                           onPressed: hasAnsweredCurrent
                               ? (isLastQuestion
                                     ? _confirmSubmit
-                                    : () =>
-                                          _nextQuestion(quiz.questions.length))
+                                    : () => _nextQuestion(
+                                        activeQuiz.questions.length,
+                                      ))
                               : null,
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -329,9 +327,8 @@ class _QuizScreenState extends State<QuizScreen> {
           );
         }
 
-        // حالة الخطأ أو الحالات غير المتوقعة (Fallback)
         return const Scaffold(
-          body: Center(child: Text('حدث خطأ غير متوقع. يرجى المحاولة لاحقاً.')),
+          body: Center(child: Text('حدث خطأ أثناء تحميل الاختبار.')),
         );
       },
     );

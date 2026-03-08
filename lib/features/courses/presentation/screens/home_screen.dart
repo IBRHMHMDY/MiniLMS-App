@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/widgets/shimmer_box.dart';
-import '../bloc/category_bloc.dart';
-import '../bloc/category_event.dart';
-import '../bloc/category_state.dart';
-import '../bloc/course_bloc.dart';
-import '../bloc/course_event.dart';
-import '../bloc/course_state.dart';
-import '../widgets/category_chip.dart';
-import '../widgets/course_card.dart';
+import 'package:mini_lms_app/core/widgets/shimmer_box.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/category_bloc.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/category_event.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/category_state.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/course_bloc.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/course_event.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/course_state.dart';
+import 'package:mini_lms_app/features/courses/presentation/widgets/category_chip.dart';
+import 'package:mini_lms_app/features/courses/presentation/widgets/course_card.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

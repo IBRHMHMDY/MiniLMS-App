@@ -21,6 +21,7 @@ import 'package:mini_lms_app/features/quiz/domain/entities/quiz_entity.dart';
 import 'package:mini_lms_app/features/quiz/domain/entities/quiz_result_entity.dart';
 import 'package:mini_lms_app/features/quiz/presentation/bloc/quiz_bloc.dart';
 import 'package:mini_lms_app/features/quiz/presentation/screens/quiz_result_screen.dart';
+import 'package:mini_lms_app/features/quiz/presentation/screens/quiz_review_screen.dart';
 import 'package:mini_lms_app/features/quiz/presentation/screens/quiz_screen.dart';
 import 'package:mini_lms_app/injection/injection_container.dart';
 
@@ -131,19 +132,30 @@ class AppRouter {
         path: '/course/:id/quiz',
         builder: (context, state) {
           final courseId = int.parse(state.pathParameters['id']!);
-          // التعديل المعماري: جعل الـ extra Nullable ليخدم نوعين من الاختبارات
           final quiz = state.extra as QuizEntity?;
           return BlocProvider(
             create: (_) => sl<QuizBloc>(),
-            child: QuizScreen(courseId: courseId, quiz: quiz!),
+            child: QuizScreen(courseId: courseId, quiz: quiz),
           );
         },
       ),
       GoRoute(
         path: '/course/:id/quiz/result',
         builder: (context, state) {
-          final result = state.extra as QuizResultEntity;
-          return QuizResultScreen(result: result);
+          final data = state.extra as Map<String, dynamic>;
+          final result = data['result'] as QuizResultEntity;
+          final quiz = data['quiz'] as QuizEntity?;
+          return QuizResultScreen(result: result, quiz: quiz);
+        },
+      ),
+      GoRoute(
+        // 👈 المسار الجديد
+        path: '/course/:id/quiz/review',
+        builder: (context, state) {
+          final data = state.extra as Map<String, dynamic>;
+          final result = data['result'] as QuizResultEntity;
+          final quiz = data['quiz'] as QuizEntity;
+          return QuizReviewScreen(result: result, quiz: quiz);
         },
       ),
     ],

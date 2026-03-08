@@ -163,7 +163,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                             course.isFree ? 'مجانى' : '\$${course.price!.toStringAsFixed(2)}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 24,
+                              fontSize: 18,
                               color: course.isFree ? AppColors.secondary : AppColors.textPrimary,
                             ),
                           ),
