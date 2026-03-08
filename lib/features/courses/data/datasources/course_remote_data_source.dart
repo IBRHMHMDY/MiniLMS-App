@@ -17,28 +17,46 @@ class CourseRemoteDataSourceImpl implements CourseRemoteDataSource {
   @override
   Future<List<CategoryModel>> getCategories() async {
     final response = await dioClient.get('/categories');
-    final List data = response.data['data'];
-    return data.map((json) => CategoryModel.fromJson(json)).toList();
+    final data = response.data['data'];
+    if (data is List) {
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map((json) => CategoryModel.fromJson(json))
+          .toList();
+    }
+    return [];
   }
 
   @override
   Future<List<CourseModel>> getCourses() async {
     final response = await dioClient.get('/courses');
-    final List data = response.data['data'];
-    return data.map((json) => CourseModel.fromJson(json)).toList();
+    final data = response.data['data'];
+    if (data is List) {
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map((json) => CourseModel.fromJson(json))
+          .toList();
+    }
+    return [];
   }
 
   @override
   Future<CourseModel> getCourseDetails(int courseId) async {
     final response = await dioClient.get('/courses/$courseId');
-    return CourseModel.fromJson(response.data['data']);
+    return CourseModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
   @override
   Future<List<CourseModel>> getMyCourses() async {
     final response = await dioClient.get('/my-courses');
-    return (response.data['data'] as List)
-        .map((course) => CourseModel.fromJson(course))
-        .toList();
+    final data = response.data['data'];
+    // 🛡️ درع الحماية أثناء جلب دوراتي
+    if (data is List) {
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map((course) => CourseModel.fromJson(course))
+          .toList();
+    }
+    return [];
   }
 }

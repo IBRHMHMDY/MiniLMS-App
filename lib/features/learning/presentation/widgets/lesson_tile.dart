@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mini_lms_app/features/learning/domain/entities/lesson_entity.dart';
+import 'package:mini_lms_app/features/learning/presentation/bloc/learning_bloc.dart';
+import 'package:mini_lms_app/features/learning/presentation/bloc/learning_event.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-import '../../domain/entities/lesson_entity.dart';
-import '../bloc/learning_bloc.dart';
-import '../bloc/learning_event.dart';
+
 
 class LessonTile extends StatefulWidget {
   final LessonEntity lesson;
+  final int courseId;
 
-  const LessonTile({super.key, required this.lesson});
+  const LessonTile({super.key, required this.lesson, required this.courseId});
 
   @override
   State<LessonTile> createState() => _LessonTileState();
@@ -17,8 +20,6 @@ class LessonTile extends StatefulWidget {
 class _LessonTileState extends State<LessonTile> {
   YoutubePlayerController? _youtubeController;
   bool _hasValidVideo = false;
-
-  // علم الحماية (Flag) لمنع إرسال طلبات متعددة للسيرفر عند وصول الفيديو لـ 90%
   bool _isCompletionTriggered = false;
 
   @override
@@ -40,28 +41,23 @@ class _LessonTileState extends State<LessonTile> {
             mute: false,
             enableCaption: true,
           ),
-        )..addListener(_videoListener); // 👈 ربط المستمع (Listener) هنا
+        )..addListener(_videoListener);
       }
     }
   }
 
-  // العقل المدبر للتتبع التلقائي
   void _videoListener() {
     if (_youtubeController != null && _youtubeController!.value.isReady) {
       final position = _youtubeController!.value.position;
       final duration = _youtubeController!.metadata.duration;
 
-      // التأكد من أن الفيديو له مدة، وأن الدرس لم يكتمل بعد، وأنه لم نقم بإرسال الطلب مسبقاً
       if (duration.inMilliseconds > 0 &&
           !widget.lesson.isCompleted &&
           !_isCompletionTriggered) {
         final percentage = position.inMilliseconds / duration.inMilliseconds;
 
-        // إذا شاهد الطالب 90% من الفيديو
-        if (percentage >= 0.90) {
-          _isCompletionTriggered = true; // إغلاق البوابة لمنع تكرار الطلب
-
-          // إرسال طلب التحديث للسيرفر بصمت (سيتحول لون الأيقونة للأخضر تلقائياً)
+        if (percentage >= 0.95) {
+          _isCompletionTriggered = true;
           context.read<LearningBloc>().add(
             ToggleLessonCompletionEvent(lessonId: widget.lesson.id),
           );
@@ -72,6 +68,7 @@ class _LessonTileState extends State<LessonTile> {
 
   @override
   void dispose() {
+    _youtubeController?.pause(); // 👈 منع الـ Memory leak في Audio Thread
     _youtubeController?.removeListener(_videoListener);
     _youtubeController?.dispose();
     super.dispose();
@@ -84,7 +81,6 @@ class _LessonTileState extends State<LessonTile> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        // استبدال الـ Checkbox بأيقونة غير قابلة للضغط (لأن التتبع أصبح تلقائياً)
         leading: Icon(
           widget.lesson.isCompleted
               ? Icons.check_circle
@@ -96,7 +92,6 @@ class _LessonTileState extends State<LessonTile> {
           widget.lesson.title,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            // شطب النص وتغيير لونه إذا كان الدرس مكتملاً
             decoration: widget.lesson.isCompleted
                 ? TextDecoration.lineThrough
                 : null,
@@ -123,6 +118,41 @@ class _LessonTileState extends State<LessonTile> {
             )
           else
             _buildContentPadding(),
+
+          if (widget.lesson.quiz.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 24.0, bottom: 8.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.quiz, color: Colors.white),
+                  label: const Text(
+                    'اختبر معلوماتك في هذا الدرس',
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade600,
+                    padding: const EdgeInsets.symmetric(vertical: 14.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    elevation: 2,
+                  ),
+                  onPressed: () {
+                    final currentQuiz = widget.lesson.quiz.first;
+                    // استخدام GoRouter مع تمرير الكائن بطريقة معمارية نظيفة
+                    context.push(
+                      '/course/${widget.courseId}/quiz',
+                      extra: currentQuiz,
+                    );
+                  },
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -174,7 +204,6 @@ class _LessonTileState extends State<LessonTile> {
             ),
           ],
 
-          // ذكاء برمجي: زر يدوي يظهر فقط للدروس النصية (التي لا تحتوي على فيديو)
           if (!_hasValidVideo && !widget.lesson.isCompleted) ...[
             const SizedBox(height: 24),
             Center(

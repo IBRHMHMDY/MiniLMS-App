@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../domain/entities/quiz_entities.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/quiz_result_entity.dart';
 
 class QuizResultScreen extends StatelessWidget {
   final QuizResultEntity result;

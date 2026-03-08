@@ -1,250 +1,339 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../bloc/quiz_bloc.dart';
-import '../bloc/quiz_event.dart';
-import '../bloc/quiz_state.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/answer_entity.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/question_entity.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/quiz_entity.dart';
+import 'package:mini_lms_app/features/quiz/presentation/bloc/quiz_bloc.dart';
+import 'package:mini_lms_app/features/quiz/presentation/bloc/quiz_event.dart';
+import 'package:mini_lms_app/features/quiz/presentation/bloc/quiz_state.dart';
+
 
 class QuizScreen extends StatefulWidget {
+  final QuizEntity? quiz; // تم جعله Nullable لدعم اختبار الكورس النهائي
   final int courseId;
 
-  const QuizScreen({super.key, required this.courseId});
+  const QuizScreen({super.key, this.quiz, required this.courseId});
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  final PageController _pageController = PageController();
-  int _currentIndex = 0;
+  int _currentQuestionIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    context.read<QuizBloc>().add(GetCourseQuizEvent(courseId: widget.courseId));
+    // 👈 المعمارية الذكية: إذا تم تمرير اختبار (درس) نستخدمه، وإلا نطلبه من الـ API (نهائي)
+    if (widget.quiz != null) {
+      context.read<QuizBloc>().add(
+        InitializeLessonQuizEvent(quiz: widget.quiz!),
+      );
+    } else {
+      context.read<QuizBloc>().add(
+        GetCourseQuizEvent(courseId: widget.courseId),
+      );
+    }
+  }
+
+  void _nextQuestion(int totalQuestions) {
+    if (_currentQuestionIndex < totalQuestions - 1) {
+      setState(() {
+        _currentQuestionIndex++;
+      });
+    }
+  }
+
+  void _previousQuestion() {
+    if (_currentQuestionIndex > 0) {
+      setState(() {
+        _currentQuestionIndex--;
+      });
+    }
+  }
+
+  void _confirmSubmit() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('تأكيد الإرسال'),
+        content: const Text(
+          'هل أنت متأكد أنك تريد إنهاء الاختبار وإرسال إجاباتك للتقييم؟',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('مراجعة إجاباتي'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext); // إغلاق الديالوج
+              // 👈 إرسال الحدث الفعلي للـ Bloc
+              context.read<QuizBloc>().add(
+                SubmitQuizEvent(courseId: widget.courseId),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            child: const Text('إرسال النتيجة'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-@override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('الاختبار النهائي')),
-      body: BlocConsumer<QuizBloc, QuizState>(
-        listener: (context, state) {
-          if (state is QuizResultSuccess) {
-            context.pushReplacement('/course/${widget.courseId}/quiz/result', extra: state.result);
-          }
-        },
-        builder: (context, state) {
-          // 1. حالة التهيئة
-          if (state is QuizInitial) {
-            return const Center(child: Text('جاري تهيئة الاختبار...', style: TextStyle(fontSize: 18)));
-          } 
-          // 2. حالة التحميل
-          else if (state is QuizLoading) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('جاري جلب الأسئلة من السيرفر...'),
-                ],
-              ),
-            );
-          } 
-          // 3. حالة الخطأ (هنا سيظهر الخطأ إذا حدثت مشكلة في السيرفر أو الـ JSON)
-          else if (state is QuizError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.warning_amber_rounded, size: 80, color: Colors.orange),
-                    const SizedBox(height: 16),
-                    Text(
-                      state.message, 
-                      textAlign: TextAlign.center, 
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => context.pop(),
-                      child: const Text('العودة للدروس'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          } 
-          // 4. حالة نجاح جلب البيانات
-          else if (state is QuizLoaded) {
-            final quiz = state.quiz;
-            final questions = quiz.questions;
-            
-            if (questions.isEmpty) {
-               return const Center(child: Text('لا توجد أسئلة مضافة في هذا الاختبار بعد.'));
-            }
-
-            return Column(
-              children: [
-                LinearProgressIndicator(
-                  value: (_currentIndex + 1) / questions.length,
-                  backgroundColor: Colors.grey.shade300,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text('السؤال ${_currentIndex + 1} من ${questions.length}', 
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-                ),
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: questions.length,
-                    itemBuilder: (context, index) {
-                      final question = questions[index];
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(question.text, style: Theme.of(context).textTheme.titleLarge),
-                            const SizedBox(height: 24),
-                            ...question.answers.map((answer) {
-                              final isSelected = state.selectedAnswers[question.id] == answer.id;
-                              return Card(
-                                color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  side: BorderSide(color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300),
-                                ),
-                                child: RadioListTile<int>(
-                                  title: Text(answer.text),
-                                  value: answer.id,
-                                  groupValue: state.selectedAnswers[question.id],
-                                  activeColor: Theme.of(context).colorScheme.primary,
-                                  onChanged: (value) {
-                                    if (value != null) {
-                                      context.read<QuizBloc>().add(SelectAnswerEvent(questionId: question.id, answerId: value));
-                                    }
-                                  },
-                                ),
-                              );
-                            }),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (_currentIndex > 0)
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            // 👈 السر هنا: تحجيم العرض لإلغاء الـ Infinity الموروثة
-                            minimumSize: const Size(100, 45),
-                          ),
-                          onPressed: () {
-                            setState(() => _currentIndex--);
-                            _pageController.previousPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          },
-                          child: const Text('السابق'),
-                        )
-                      else
-                        const SizedBox.shrink(),
-
-                      if (_currentIndex < questions.length - 1)
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            // 👈 تحجيم العرض هنا أيضاً
-                            minimumSize: const Size(100, 45),
-                          ),
-                          onPressed: () {
-                            setState(() => _currentIndex++);
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          },
-                          child: const Text('التالي'),
-                        )
-                      else
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            // 👈 تحجيم العرض لزر الإنهاء لإنقاذ الـ Row من الانهيار
-                            minimumSize: const Size(120, 45),
-                          ),
-                          onPressed: () {
-                            context.read<QuizBloc>().add(
-                              SubmitQuizEvent(courseId: widget.courseId),
-                            );
-                          },
-                          child: state is QuizSubmitting
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'إنهاء الاختبار',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          }
-          else if (state is QuizSubmitting) {
-            return const Center(
+    return BlocConsumer<QuizBloc, QuizState>(
+      listener: (context, state) {
+        if (state is QuizError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        } else if (state is QuizResultSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تم تسجيل إجاباتك بنجاح!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // 👈 الانتقال لشاشة النتيجة مع تمرير الكائن
+          context.pushReplacement(
+            '/course/${widget.courseId}/quiz/result',
+            extra: state.result,
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is QuizLoading || state is QuizSubmitting) {
+          return const Scaffold(
+            body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
                   Text(
-                    'جاري إرسال الإجابات وحساب النتيجة...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
+                    'جاري معالجة البيانات...',
+                    style: TextStyle(fontSize: 16),
                   ),
                 ],
               ),
-            );
-          }
-          
-          // 5. الحالة الافتراضية (Ultimate Fallback) تكشف لنا المشكلة إذا كانت الـ State مفقودة
-          return Center(
-            child: Text(
-              'حالة غير معروفة: ${state.runtimeType}\nالرجاء فحص الـ Terminal.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
           );
-        },
-      ),
+        }
+
+        if (state is QuizLoaded) {
+          final QuizEntity quiz = state.quiz;
+          final Map<int, int> selectedAnswers = state.selectedAnswers;
+
+          if (quiz.questions.isEmpty) {
+            return Scaffold(
+              appBar: AppBar(title: Text(quiz.title)),
+              body: const Center(
+                child: Text(
+                  'عذراً، لا توجد أسئلة في هذا الاختبار حالياً.',
+                  style: TextStyle(fontSize: 18.0),
+                ),
+              ),
+            );
+          }
+
+          final QuestionEntity currentQuestion =
+              quiz.questions[_currentQuestionIndex];
+          final bool isLastQuestion =
+              _currentQuestionIndex == quiz.questions.length - 1;
+          final bool isFirstQuestion = _currentQuestionIndex == 0;
+          final bool hasAnsweredCurrent = selectedAnswers.containsKey(
+            currentQuestion.id,
+          );
+
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(quiz.title),
+              centerTitle: true,
+              elevation: 0,
+            ),
+            body: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // شريط التقدم
+                  LinearProgressIndicator(
+                    value: (_currentQuestionIndex + 1) / quiz.questions.length,
+                    backgroundColor: Colors.grey.shade300,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).primaryColor,
+                    ),
+                    minHeight: 8.0,
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  // عداد الأسئلة
+                  Text(
+                    'سؤال ${_currentQuestionIndex + 1} من ${quiz.questions.length}',
+                    style: const TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  // نص السؤال
+                  Text(
+                    currentQuestion.questionText,
+                    style: const TextStyle(
+                      fontSize: 22.0,
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 32.0),
+
+                  // خيارات الإجابة
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: currentQuestion.answers.length,
+                      itemBuilder: (context, index) {
+                        final AnswerEntity answer =
+                            currentQuestion.answers[index];
+                        final bool isSelected =
+                            selectedAnswers[currentQuestion.id] == answer.id;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: InkWell(
+                            onTap: () {
+                              context.read<QuizBloc>().add(
+                                SelectAnswerEvent(
+                                  questionId: currentQuestion.id,
+                                  answerId: answer.id,
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(12.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Theme.of(context).primaryColor
+                                      : Colors.grey.shade300,
+                                  width: 2.0,
+                                ),
+                                borderRadius: BorderRadius.circular(12.0),
+                                color: isSelected
+                                    ? Theme.of(
+                                        context,
+                                      ).primaryColor.withOpacity(0.05)
+                                    : Colors.transparent,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 16.0,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isSelected
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_off,
+                                    color: isSelected
+                                        ? Theme.of(context).primaryColor
+                                        : Colors.grey,
+                                  ),
+                                  const SizedBox(width: 12.0),
+                                  Expanded(
+                                    child: Text(
+                                      answer.text,
+                                      style: TextStyle(
+                                        fontSize: 16.0,
+                                        color: isSelected
+                                            ? Theme.of(context).primaryColor
+                                            : Colors.black87,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  // أزرار التنقل (السابق / التالي / إنهاء)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (!isFirstQuestion)
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _previousQuestion,
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16.0,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                            ),
+                            child: const Text(
+                              'السابق',
+                              style: TextStyle(fontSize: 16.0),
+                            ),
+                          ),
+                        )
+                      else
+                        const Spacer(),
+
+                      const SizedBox(width: 16.0),
+
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: hasAnsweredCurrent
+                              ? (isLastQuestion
+                                    ? _confirmSubmit
+                                    : () =>
+                                          _nextQuestion(quiz.questions.length))
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16.0),
+                            backgroundColor: isLastQuestion
+                                ? Colors.green
+                                : Theme.of(context).primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          child: Text(
+                            isLastQuestion ? 'إنهاء الاختبار' : 'التالي',
+                            style: const TextStyle(
+                              fontSize: 16.0,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // حالة الخطأ أو الحالات غير المتوقعة (Fallback)
+        return const Scaffold(
+          body: Center(child: Text('حدث خطأ غير متوقع. يرجى المحاولة لاحقاً.')),
+        );
+      },
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/quiz_entities.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/quiz_result_entity.dart';
+import '../../domain/entities/quiz_entity.dart';
 
 abstract class QuizState extends Equatable {
   const QuizState();

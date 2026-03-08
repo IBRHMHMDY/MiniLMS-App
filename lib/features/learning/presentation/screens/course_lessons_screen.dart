@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../bloc/learning_bloc.dart';
-import '../bloc/learning_event.dart';
-import '../bloc/learning_state.dart';
-import '../widgets/lesson_tile.dart';
+import 'package:mini_lms_app/features/learning/presentation/bloc/learning_bloc.dart';
+import 'package:mini_lms_app/features/learning/presentation/bloc/learning_event.dart';
+import 'package:mini_lms_app/features/learning/presentation/bloc/learning_state.dart';
+import 'package:mini_lms_app/features/learning/presentation/widgets/lesson_tile.dart';
+
 
 class CourseLessonsScreen extends StatefulWidget {
   final int courseId;
@@ -56,7 +57,10 @@ class _CourseLessonsScreenState extends State<CourseLessonsScreen> {
                     padding: const EdgeInsets.all(16.0),
                     itemCount: state.lessons.length,
                     itemBuilder: (context, index) {
-                      return LessonTile(lesson: state.lessons[index]);
+                      return LessonTile(
+                        courseId: widget.courseId,
+                        lesson: state.lessons[index],
+                      );
                     },
                   ),
                 ),
@@ -91,8 +95,9 @@ class _CourseLessonsScreenState extends State<CourseLessonsScreen> {
                             onPressed: canTakeQuiz
                                 ? () => context.push(
                                     '/course/${widget.courseId}/quiz',
+                                    // لن نمرر extra، مما يعني أن الـ QuizScreen ستطلب الاختبار من السيرفر
                                   )
-                                : null, // null تجعل الزر Disabled تلقائياً
+                                : null,
                             child: const Text(
                               'بدء الاختبار النهائي',
                               style: TextStyle(

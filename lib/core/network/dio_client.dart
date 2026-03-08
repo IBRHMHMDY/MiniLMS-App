@@ -78,28 +78,42 @@ class DioClient {
   // --- المترجم الذكي لأخطاء Laravel ---
 
   ServerException _handleDioError(DioException e) {
-    if (e.response != null && e.response?.data is Map) {
-      final data = e.response!.data as Map<String, dynamic>;
+    if (e.response != null) {
+      try {
+        final responseData = e.response!.data;
+        String errorMessage = 'حدث خطأ غير متوقع من الخادم';
 
-      String message = data['message'] ?? 'حدث خطأ في الخادم';
+        // إذا كان الرد عبارة عن كائن (Map)
+        if (responseData is Map<String, dynamic>) {
+          // جلب الرسالة من الرد
+          errorMessage = responseData['message']?.toString() ?? errorMessage;
 
-      // استخراج أخطاء التحقق (Validation Errors) الخاصة بلارافيل بشكل أنيق
-      Map<String, dynamic>? errors = data['errors'];
-      if (errors != null && errors.isNotEmpty) {
-        // جلب أول رسالة خطأ تفصيلية (مثلاً: "البريد الإلكتروني مستخدم من قبل") لعرضها للمستخدم مباشرة
-        message = errors.values.first[0].toString();
+          // في حال أرسل لارافيل تفاصيل إضافية للخطأ
+          if (responseData['errors'] != null) {
+            return ServerException(
+              message: errorMessage,
+              errors: responseData['errors'],
+            );
+          }
+        }
+        // إذا كان الرد عبارة عن نص مباشر
+        else if (responseData is String) {
+          errorMessage = responseData;
+        }
+
+        return ServerException(message: errorMessage);
+      } catch (_) {
+        return ServerException(message: 'حدث خطأ في قراءة استجابة الخادم');
       }
-
-      return ServerException(message: message, errors: errors);
     } else if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
       return ServerException(
-        message: 'انتهى وقت الاتصال، تأكد من جودة الإنترنت.',
+        message: 'انتهى وقت الاتصال، يرجى التحقق من الإنترنت.',
       );
-    } else if (e.type == DioExceptionType.connectionError) {
-      return ServerException(message: 'لا يوجد اتصال بالإنترنت.');
     } else {
-      return ServerException(message: 'حدث خطأ غير متوقع. حاول مرة أخرى.');
+      return ServerException(
+        message: 'تعذر الاتصال بالخادم، تأكد من اتصالك بالإنترنت.',
+      );
     }
   }
 }

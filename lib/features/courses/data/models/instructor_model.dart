@@ -4,6 +4,11 @@ class InstructorModel extends InstructorEntity {
   const InstructorModel({required super.id, required super.name});
 
   factory InstructorModel.fromJson(Map<String, dynamic> json) {
-    return InstructorModel(id: json['id'], name: json['name']);
+    return InstructorModel(
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? 'مدرب غير معروف',
+    );
   }
 }

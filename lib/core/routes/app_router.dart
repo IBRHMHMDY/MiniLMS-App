@@ -1,41 +1,34 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mini_lms_app/core/widgets/main_screen.dart';
+import 'package:mini_lms_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:mini_lms_app/features/auth/presentation/screens/login_screen.dart';
+import 'package:mini_lms_app/features/auth/presentation/screens/register_screen.dart';
+import 'package:mini_lms_app/features/auth/presentation/screens/splash_screen.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/category_bloc.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/course_bloc.dart';
+import 'package:mini_lms_app/features/courses/presentation/screens/course_details_screen.dart';
+import 'package:mini_lms_app/features/courses/presentation/screens/home_screen.dart';
+import 'package:mini_lms_app/features/learning/presentation/bloc/learning_bloc.dart';
+import 'package:mini_lms_app/features/learning/presentation/screens/course_lessons_screen.dart';
 import 'package:mini_lms_app/features/learning/presentation/screens/my_courses_screen.dart';
+import 'package:mini_lms_app/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:mini_lms_app/features/profile/presentation/bloc/profile_event.dart';
 import 'package:mini_lms_app/features/profile/presentation/screens/forgot_password_screen.dart';
+import 'package:mini_lms_app/features/profile/presentation/screens/profile_screen.dart';
 import 'package:mini_lms_app/features/profile/presentation/screens/reset_password_screen.dart';
-import 'package:mini_lms_app/features/quiz/domain/entities/quiz_entities.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/quiz_entity.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/quiz_result_entity.dart';
 import 'package:mini_lms_app/features/quiz/presentation/bloc/quiz_bloc.dart';
 import 'package:mini_lms_app/features/quiz/presentation/screens/quiz_result_screen.dart';
 import 'package:mini_lms_app/features/quiz/presentation/screens/quiz_screen.dart';
-
-// Auth
-import '../../features/auth/presentation/bloc/auth_bloc.dart';
-import '../../features/auth/presentation/screens/splash_screen.dart';
-import '../../features/auth/presentation/screens/login_screen.dart';
-import '../../features/auth/presentation/screens/register_screen.dart';
+import 'package:mini_lms_app/injection/injection_container.dart';
 
 
-// Profile
-import '../../features/profile/presentation/bloc/profile_bloc.dart';
-import '../../features/profile/presentation/bloc/profile_event.dart';
-import '../../features/profile/presentation/screens/profile_screen.dart';
-
-// Courses
-import '../../features/courses/presentation/bloc/category_bloc.dart';
-import '../../features/courses/presentation/bloc/course_bloc.dart';
-import '../../features/courses/presentation/screens/home_screen.dart';
-import '../../features/courses/presentation/screens/course_details_screen.dart';
-
-// Learning
-import '../../features/learning/presentation/bloc/learning_bloc.dart';
-import '../../features/learning/presentation/screens/course_lessons_screen.dart';
-
-import '../../injection/injection_container.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/', // التوجيه الافتراضي هو الـ Splash Screen
+    initialLocation: '/',
     routes: [
       ShellRoute(
         builder: (context, state, child) {
@@ -111,7 +104,6 @@ class AppRouter {
           );
         },
       ),
-      
       GoRoute(
         path: '/course/:id',
         builder: (context, state) {
@@ -139,9 +131,11 @@ class AppRouter {
         path: '/course/:id/quiz',
         builder: (context, state) {
           final courseId = int.parse(state.pathParameters['id']!);
+          // التعديل المعماري: جعل الـ extra Nullable ليخدم نوعين من الاختبارات
+          final quiz = state.extra as QuizEntity?;
           return BlocProvider(
             create: (_) => sl<QuizBloc>(),
-            child: QuizScreen(courseId: courseId),
+            child: QuizScreen(courseId: courseId, quiz: quiz!),
           );
         },
       ),
@@ -152,7 +146,6 @@ class AppRouter {
           return QuizResultScreen(result: result);
         },
       ),
-      
     ],
   );
 }

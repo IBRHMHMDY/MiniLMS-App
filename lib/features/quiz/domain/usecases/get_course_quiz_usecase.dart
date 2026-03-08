@@ -1,7 +1,8 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../entities/quiz_entities.dart';
-import '../repositories/quiz_repository.dart';
+import 'package:mini_lms_app/core/error/failures.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/quiz_entity.dart';
+import 'package:mini_lms_app/features/quiz/domain/repositories/quiz_repository.dart';
+
 
 class GetCourseQuizUseCase {
   final QuizRepository repository;

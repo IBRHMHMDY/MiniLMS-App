@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mini_lms_app/core/theme/app_colors.dart';
-import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/shimmer_box.dart';
-import '../bloc/course_bloc.dart';
-import '../bloc/course_event.dart';
-import '../bloc/course_state.dart';
-import '../../../learning/presentation/bloc/learning_bloc.dart';
-import '../../../learning/presentation/bloc/learning_event.dart';
-import '../../../learning/presentation/bloc/learning_state.dart';
+import 'package:mini_lms_app/core/widgets/custom_button.dart';
+import 'package:mini_lms_app/core/widgets/shimmer_box.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/course_bloc.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/course_event.dart';
+import 'package:mini_lms_app/features/courses/presentation/bloc/course_state.dart';
+import 'package:mini_lms_app/features/learning/presentation/bloc/learning_bloc.dart';
+import 'package:mini_lms_app/features/learning/presentation/bloc/learning_event.dart';
+import 'package:mini_lms_app/features/learning/presentation/bloc/learning_state.dart';
+
 
 class CourseDetailsScreen extends StatefulWidget {
   final int courseId;
@@ -179,7 +180,8 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       const SizedBox(height: 32),
-                      CustomButton(
+                      // course.enroll ?
+                       CustomButton(
                         onPressed: () {
                           if (!isFree) {
                             // 👈 المنطق التجاري: إظهار رسالة للكورسات المدفوعة

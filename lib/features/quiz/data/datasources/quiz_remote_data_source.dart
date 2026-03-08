@@ -1,5 +1,7 @@
-import '../../../../core/network/dio_client.dart';
-import '../models/quiz_models.dart';
+import 'package:mini_lms_app/core/network/dio_client.dart';
+import 'package:mini_lms_app/features/quiz/data/models/quiz_model.dart';
+import 'package:mini_lms_app/features/quiz/data/models/quiz_result_model.dart';
+
 
 abstract class QuizRemoteDataSource {
   Future<QuizModel> getCourseQuiz(int courseId);

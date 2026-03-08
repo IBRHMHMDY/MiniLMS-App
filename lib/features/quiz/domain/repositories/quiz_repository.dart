@@ -1,6 +1,8 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../entities/quiz_entities.dart';
+import 'package:mini_lms_app/core/error/failures.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/quiz_entity.dart';
+import 'package:mini_lms_app/features/quiz/domain/entities/quiz_result_entity.dart';
+
 
 abstract class QuizRepository {
   Future<Either<Failure, QuizEntity>> getCourseQuiz(int courseId);

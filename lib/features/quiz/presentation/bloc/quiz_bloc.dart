@@ -13,6 +13,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     required this.submitQuizUseCase,
   }) : super(QuizInitial()) {
     on<GetCourseQuizEvent>(_onGetCourseQuiz);
+    on<InitializeLessonQuizEvent>(_onInitializeLessonQuiz); // 👈 تسجيل المستمع
     on<SelectAnswerEvent>(_onSelectAnswer);
     on<SubmitQuizEvent>(_onSubmitQuiz);
   }
@@ -29,10 +30,17 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     );
   }
 
+  // 👈 دالة التهيئة للاختبار الموجود مسبقاً
+  void _onInitializeLessonQuiz(
+    InitializeLessonQuizEvent event,
+    Emitter<QuizState> emit,
+  ) {
+    emit(QuizLoaded(quiz: event.quiz, selectedAnswers: const {}));
+  }
+
   void _onSelectAnswer(SelectAnswerEvent event, Emitter<QuizState> emit) {
     if (state is QuizLoaded) {
       final currentState = state as QuizLoaded;
-      // إنشاء نسخة جديدة من الإجابات للحفاظ على الـ Immutability
       final updatedAnswers = Map<int, int>.from(currentState.selectedAnswers);
       updatedAnswers[event.questionId] = event.answerId;
       emit(currentState.copyWith(selectedAnswers: updatedAnswers));
@@ -46,7 +54,6 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     if (state is QuizLoaded) {
       final currentState = state as QuizLoaded;
 
-      // تجهيز الإجابات بالتنسيق الذي يتوقعه الـ API
       final List<Map<String, int>> formattedAnswers = currentState
           .selectedAnswers
           .entries
@@ -55,7 +62,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
 
       if (formattedAnswers.isEmpty) {
         emit(const QuizError(message: 'يجب الإجابة على سؤال واحد على الأقل.'));
-        emit(currentState); // العودة للحالة السابقة ليتمكن من استكمال الحل
+        emit(currentState);
         return;
       }
 
@@ -63,7 +70,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
       final result = await submitQuizUseCase(event.courseId, formattedAnswers);
       result.fold((failure) {
         emit(QuizError(message: failure.message));
-        emit(currentState); // إرجاع الأسئلة في حال فشل الإرسال (مثلا انقطاع نت)
+        emit(currentState);
       }, (quizResult) => emit(QuizResultSuccess(result: quizResult)));
     }
   }
